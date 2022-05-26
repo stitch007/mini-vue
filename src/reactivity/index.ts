@@ -7,3 +7,5 @@ export {
   isProxy,
   toRaw,
 } from './reactive'
+
+export { effect, stop } from './effect'
