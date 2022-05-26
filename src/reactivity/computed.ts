@@ -8,6 +8,10 @@ export type ComputedSetter<T> = (v: T) => void
 
 export class ComputedRefImpl<T> {
   private _value!: T
+  // const name = computed(() => xxx)
+  // effect(() => {
+  //   console.log(name.value)
+  // })
   // 计算属性被访问时的依赖
   public dep?: Dep = undefined
   // 计算属性的effect
