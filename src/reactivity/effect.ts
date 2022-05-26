@@ -4,6 +4,7 @@ export type EffectScheduler = (...args: any[]) => any
 
 export interface ReactiveEffectRunner<T = any> {
   (): T
+
   effect: ReactiveEffect
 }
 
@@ -81,7 +82,7 @@ export function stop(runner: ReactiveEffectRunner) {
 
 // 响应式对象在get的时候会调用
 export function track(target: object, key: unknown) {
-  if (shouldTrack && activeEffect) {
+  if (isTracking()) {
     // 不存在的话就要新建
     let depsMap = targetMap.get(target)
     if (!depsMap) {
@@ -97,13 +98,11 @@ export function track(target: object, key: unknown) {
 }
 
 export function trackEffects(dep: Dep) {
-  if (shouldTrack) {
-    // 在dep中添加effect 在effect的deps中添加dep
-    if (!dep.has(activeEffect!)) {
-      dep.add(activeEffect!)
-      // track完才会把activeEffect置为undefined
-      activeEffect!.deps.push(dep)
-    }
+  // 在dep中添加effect 在effect的deps中添加dep
+  if (!dep.has(activeEffect!)) {
+    dep.add(activeEffect!)
+    // track完才会把activeEffect置为undefined
+    activeEffect!.deps.push(dep)
   }
 }
 
@@ -134,6 +133,10 @@ export function triggerEffect(dep: Dep) {
       effect.run()
     }
   })
+}
+
+export function isTracking() {
+  return shouldTrack && activeEffect !== undefined
 }
 
 function cleanupEffect(effect: ReactiveEffect) {
