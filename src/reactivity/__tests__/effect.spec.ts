@@ -3,7 +3,8 @@ import { effect, stop } from '../effect'
 
 describe('effect', () => {
   it('should run the passed function once (wrapped by a effect)', () => {
-    const fnSpy = jest.fn(() => {})
+    const fnSpy = jest.fn(() => {
+    })
     effect(fnSpy)
     expect(fnSpy).toHaveBeenCalledTimes(1)
   })
@@ -118,5 +119,36 @@ describe('effect', () => {
 
     stop(runner)
     expect(onStop).toHaveBeenCalled()
+  })
+
+  it('should be re-collected effect', () => {
+    let dummy = 0
+    const fn = jest.fn()
+    const data = reactive({ flag: true, count1: 0, count2: 10 })
+    effect(() => {
+      fn()
+      dummy = data.flag ? data.count1 : data.count2
+    })
+    expect(dummy).toBe(0)
+    expect(fn).toHaveBeenCalledTimes(1)
+    data.flag = false
+    data.count1 += 1
+    expect(fn).toHaveBeenCalledTimes(2)
+  })
+
+  it('nesting', () => {
+    let dummy = 0
+    const data = reactive({ a: 0, b: 0})
+    const fn = jest.fn()
+    effect(() => {
+      fn()
+      effect(() => {
+        dummy += data.a
+      })
+      dummy += data.b
+    })
+    expect(fn).toHaveBeenCalledTimes(1)
+    data.b += 1
+    expect(fn).toHaveBeenCalledTimes(2)
   })
 })

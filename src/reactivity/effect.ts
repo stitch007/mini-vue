@@ -4,7 +4,6 @@ export type EffectScheduler = (...args: any[]) => any
 
 export interface ReactiveEffectRunner<T = any> {
   (): T
-
   effect: ReactiveEffect
 }
 
@@ -13,7 +12,7 @@ export interface ReactiveEffectOptions {
   onStop?: () => void
 }
 
-let shouldTrack = false
+let shouldTrack = true
 let activeEffect: ReactiveEffect | undefined
 // { target: Map<key, Dep> }
 const targetMap = new WeakMap<any, Map<any, Dep>>()
@@ -26,8 +25,7 @@ export class ReactiveEffect<T = any> {
 
   public onStop?: () => void
 
-  constructor(public fn: () => T, public scheduler: EffectScheduler | null = null) {
-  }
+  constructor(public fn: () => T, public scheduler: EffectScheduler | null = null) {}
 
   run() {
     // 没active不用收集依赖
@@ -45,13 +43,24 @@ export class ReactiveEffect<T = any> {
       // 这里用parent记录下父节点
       this.parent = activeEffect
       activeEffect = this
-      shouldTrack = true
 
+      // const data = reactive({
+      //   flag: true,
+      //   message1: 'message1',
+      //   message2: 'message2',
+      // })
+      // effect(() => {
+      //   console.log(data.flag ? data.message1 : data.message2)
+      // })
+      // data.flag = false
+      // data.message1 = 'message111'
+      // 需要的效果时修改message1时不会再重新执行effect
+      // 只需每次run时都重新收集依赖
+      cleanupEffect(this)
       return this.fn()
     } finally {
       activeEffect = this.parent
       this.parent = undefined
-      shouldTrack = false
     }
   }
 
@@ -127,10 +136,13 @@ export function trigger(target: object, key: unknown) {
 export function triggerEffect(dep: Dep) {
   // 执行所有effect
   dep.forEach((effect) => {
-    if (effect.scheduler) {
-      effect.scheduler()
-    } else {
-      effect.run()
+    // 防止死循环
+    if (effect !== activeEffect) {
+      if (effect.scheduler) {
+        effect.scheduler()
+      } else {
+        effect.run()
+      }
     }
   })
 }
