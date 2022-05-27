@@ -1,4 +1,5 @@
 import { mutableHandlers, readonlyHandlers, shallowReadonlyHandlers } from './baseHandlers'
+import { isObject } from '../shared'
 
 export const reactiveMap = new WeakMap<object, any>()
 export const readonlyMap = new WeakMap<object, any>()
@@ -33,8 +34,12 @@ export function isReadonly(value: object) {
 }
 
 export function isProxy(value) {
-  return isReactive(value) || isReadonly(value);
+  return isReactive(value) || isReadonly(value)
 }
+
+export const toReactive = (val) => isObject(val) ? reactive(val) : val
+
+export const toReadonly = (val) => isObject(val) ? readonly(val) : val
 
 export function toRaw(value: object) {
   // 不是proxy一定是普通对象
