@@ -1,4 +1,5 @@
 import { createDep, Dep } from './dep'
+import { extend } from '../shared'
 
 export type EffectScheduler = (...args: any[]) => any
 
@@ -75,7 +76,7 @@ export class ReactiveEffect<T = any> {
 
 export function effect<T = any>(fn: () => T, options: ReactiveEffectOptions = {}) {
   const _effect = new ReactiveEffect(fn)
-  Object.assign(_effect, options)
+  extend(_effect, options)
   _effect.run()
 
   // 把run方法返回，可以让用户选择在什么时候调用
