@@ -37,11 +37,14 @@ export function isProxy(value) {
   return isReactive(value) || isReadonly(value)
 }
 
-export const toReactive = (val) => isObject(val) ? reactive(val) : val
+export const toReactive = (value) => isObject(value) ? reactive(value) : value
 
-export const toReadonly = (val) => isObject(val) ? readonly(val) : val
+export const toReadonly = (value) => isObject(value) ? readonly(value) : value
 
-export function toRaw(value: object) {
+export function toRaw(value) {
+  if (!isObject(value)) {
+    return value
+  }
   // 不是proxy一定是普通对象
   if (!value[ReactiveFlags.IS_RAW]) {
     return value
