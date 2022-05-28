@@ -9,7 +9,7 @@ export function isVNode(value: any): boolean {
 export function createVNode(type: any, props?: any, children?: string | any[]) {
   const shapeFlag = (isString(type)
       ? ShapeFlags.ELEMENT
-      : 0)
+      : ShapeFlags.STATEFUL_COMPONENT)
     | (isArray(children)
       ? ShapeFlags.ARRAY_CHILDREN
       : ShapeFlags.TEXT_CHILDREN)
@@ -23,4 +23,9 @@ export function createVNode(type: any, props?: any, children?: string | any[]) {
     children,
     shapeFlag,
   }
+}
+
+export { createVNode as createElementVNode }
+export function createTextVNode(text: string = " ") {
+  return createVNode(Text, {}, text)
 }
