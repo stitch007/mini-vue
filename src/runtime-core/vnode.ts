@@ -6,6 +6,10 @@ export function isVNode(value: any): boolean {
   return !!(value && value.__v_isVNode)
 }
 
+export function isSameVNodeType(n1, n2): boolean {
+  return n1.type === n2.type && n1.key === n2.key
+}
+
 export function createVNode(type: any, props?: any, children?: string | any[]) {
   const shapeFlag = (isString(type)
       ? ShapeFlags.ELEMENT
