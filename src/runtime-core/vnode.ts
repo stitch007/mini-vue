@@ -33,3 +33,10 @@ export { createVNode as createElementVNode }
 export function createTextVNode(text: string = " ") {
   return createVNode(Text, {}, text)
 }
+
+export function normalizeVNode(child) {
+  if (isString(child)) {
+    return createTextVNode(child)
+  }
+  return child
+}
