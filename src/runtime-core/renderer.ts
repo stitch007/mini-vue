@@ -1,5 +1,9 @@
 import { ShapeFlags } from '../shared'
 import { isSameVNodeType, normalizeVNode, Text } from './vnode'
+import { createComponentInstance, setupComponent } from './component'
+import { effect } from '../reactivity'
+import { queueJob } from './scheduler'
+import { ReactiveEffect } from '../reactivity/effect'
 
 export function createRenderer(renderOptions) {
   const {
@@ -72,48 +76,6 @@ export function createRenderer(renderOptions) {
         hostPatchProp(el, key, oldProps[key], newProps[key])
       }
     }
-  }
-
-  // 求最长递增子序列
-  const getSequence = (arr: number[]): number[] => {
-    const p = arr.slice()
-    const result = [0]
-    let i, j, u, v, c
-    const len = arr.length
-    for (i = 0; i < len; i++) {
-      const arrI = arr[i]
-      if (arrI !== 0) {
-        j = result[result.length - 1]
-        if (arr[j] < arrI) {
-          p[i] = j
-          result.push(i)
-          continue
-        }
-        u = 0
-        v = result.length - 1
-        while (u < v) {
-          c = (u + v) >> 1
-          if (arr[result[c]] < arrI) {
-            u = c + 1
-          } else {
-            v = c
-          }
-        }
-        if (arrI < arr[result[u]]) {
-          if (u > 0) {
-            p[i] = result[u - 1]
-          }
-          result[u] = i
-        }
-      }
-    }
-    u = result.length
-    v = result[u - 1]
-    while (u-- > 0) {
-      result[u] = v
-      v = p[v]
-    }
-    return result
   }
 
   // 核心 diff 算法
@@ -344,6 +306,70 @@ export function createRenderer(renderOptions) {
     }
   }
 
+  // 调用 render，用 effect 包裹
+  const setupRenderEffect = (instance, vnode, container) => {
+    const componentUpdateFn = () => {
+      if (!instance.isMounted) {
+        const proxyToUse = instance.proxy
+        const subTree = (instance.subTree = normalizeVNode(instance.render.call(proxyToUse)))
+
+        // TODO beforeMount hook
+        console.log(`beforeMount: ${instance.type.name}`)
+
+        patch(null, subTree, container, null, instance)
+
+        vnode.el = subTree.el
+
+        // TODO mounted hook
+        console.log(`mounted: ${instance.type.name}`)
+        instance.isMounted = true
+      } else {
+        const proxyToUse = instance.proxy
+        const nextTree = normalizeVNode(instance.render.call(proxyToUse))
+
+        const prevTree = instance.subTree
+        instance.subTree = nextTree
+
+        // TODO beforeUpdated hook
+        console.log(`beforeUpdated: ${instance.type.name}`)
+
+        patch(prevTree, nextTree, container, null, instance)
+
+        // TODO updated hook
+        console.log(`updated: ${instance.type.name}`)
+      }
+    }
+
+    const effect = new ReactiveEffect(componentUpdateFn, () => queueJob(instance.update))
+
+    const update = (instance.update = effect.run.bind(effect))
+    update()
+  }
+
+  const mountComponent = (vnode, container, parentComponent) => {
+    // 创建实例，并且保存到 vnode.component 中
+    const instance = (vnode.component = createComponentInstance(vnode, parentComponent))
+
+    setupComponent(instance)
+
+    setupRenderEffect(instance, vnode, container)
+  }
+
+  const updateComponent = (n1, n2, container) => {
+
+  }
+
+  // 组件的处理方法
+  const processComponent = (n1, n2, container, parentComponent) => {
+    if (!n1) {
+      // 初次渲染
+      mountComponent(n2, container, parentComponent)
+    } else {
+      // 更新流程
+      updateComponent(n1, n2, container)
+    }
+  }
+
   const patch = (n1, n2, container, anchor = null, parentComponent = null) => {
     // n1 和 n2 不相等 那么直接卸载n1
     if (n1 && !isSameVNodeType(n1, n2)) {
@@ -362,7 +388,7 @@ export function createRenderer(renderOptions) {
         if (shapeFlag & ShapeFlags.ELEMENT) {
           processElement(n1, n2, container, anchor, parentComponent)
         } else if (shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
-
+          processComponent(n1, n2, container, parentComponent)
         }
         break
     }
@@ -376,4 +402,46 @@ export function createRenderer(renderOptions) {
     render,
     patch,
   }
+}
+
+// 求最长递增子序列
+function getSequence(arr: number[]): number[] {
+  const p = arr.slice()
+  const result = [0]
+  let i, j, u, v, c
+  const len = arr.length
+  for (i = 0; i < len; i++) {
+    const arrI = arr[i]
+    if (arrI !== 0) {
+      j = result[result.length - 1]
+      if (arr[j] < arrI) {
+        p[i] = j
+        result.push(i)
+        continue
+      }
+      u = 0
+      v = result.length - 1
+      while (u < v) {
+        c = (u + v) >> 1
+        if (arr[result[c]] < arrI) {
+          u = c + 1
+        } else {
+          v = c
+        }
+      }
+      if (arrI < arr[result[u]]) {
+        if (u > 0) {
+          p[i] = result[u - 1]
+        }
+        result[u] = i
+      }
+    }
+  }
+  u = result.length
+  v = result[u - 1]
+  while (u-- > 0) {
+    result[u] = v
+    v = p[v]
+  }
+  return result
 }

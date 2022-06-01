@@ -16,3 +16,7 @@ export const hasChange = (newValue: unknown, oldValue: unknown) => !Object.is(ne
 
 const onRE = /^on[^a-z]/
 export const isOn = (key: string) => onRE.test(key)
+
+export function hasOwn(val, key) {
+  return Object.prototype.hasOwnProperty.call(val, key)
+}
