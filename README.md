@@ -8,6 +8,7 @@
 
 - reactivity
   - [x] reactive
+  - [x] shallowReactive
   - [x] readonly
   - [x] shallowReadonly
   - [x] toRaw

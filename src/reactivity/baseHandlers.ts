@@ -4,6 +4,7 @@ import { isObject } from '../shared'
 
 const get = createGetter()
 const set = createSetter()
+const shallowGet = createGetter(false, true)
 const readonlyGet = createGetter(true, false)
 const shallowReadonlyGet = createGetter(true, true)
 
@@ -50,6 +51,8 @@ function createSetter() {
 }
 
 export const mutableHandlers = { get, set }
+
+export const shallowReactiveHandlers = { get: shallowGet, set }
 
 export const readonlyHandlers = {
   get: readonlyGet,

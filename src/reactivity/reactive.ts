@@ -1,7 +1,13 @@
-import { mutableHandlers, readonlyHandlers, shallowReadonlyHandlers } from './baseHandlers'
+import {
+  mutableHandlers,
+  shallowReactiveHandlers,
+  readonlyHandlers,
+  shallowReadonlyHandlers
+} from './baseHandlers'
 import { isObject } from '../shared'
 
 export const reactiveMap = new WeakMap<object, any>()
+export const shallowReactiveMap = new WeakMap<object, any>()
 export const readonlyMap = new WeakMap<object, any>()
 export const shallowReadonlyMap = new WeakMap<object, any>()
 
@@ -13,6 +19,10 @@ export const enum ReactiveFlags {
 
 export function reactive(target: object) {
   return createReactiveObject(target, reactiveMap, mutableHandlers)
+}
+
+export function shallowReactive(target) {
+  return createReactiveObject(target, shallowReactiveMap, shallowReactiveHandlers)
 }
 
 export function readonly(target: object) {
