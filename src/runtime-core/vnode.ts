@@ -32,13 +32,15 @@ export function createVNode(type: any, props?: any, children?: string | any[]) {
 
 export { createVNode as createElementVNode }
 
-export function createTextVNode(text: string = ' ') {
+export function createTextVNode(text = ' ') {
   return createVNode(Text, {}, text)
 }
 
 export function normalizeVNode(child) {
   if (isString(child)) {
     return createTextVNode(child)
+  } else if (isArray(child)) {
+    return createVNode(Fragment, {}, child.slice())
   }
   return child
 }
