@@ -1,9 +1,10 @@
 import { ShapeFlags } from '../shared'
 import { isSameVNodeType, normalizeVNode, Text } from './vnode'
 import { createComponentInstance, setupComponent } from './component'
-import { effect } from '../reactivity'
 import { queueJob } from './scheduler'
 import { ReactiveEffect } from '../reactivity/effect'
+import { shouldUpdateComponent } from './componentRenderUtils'
+import { updateProps } from './componentProps'
 
 export function createRenderer(renderOptions) {
   const {
@@ -307,7 +308,7 @@ export function createRenderer(renderOptions) {
   }
 
   // 调用 render，用 effect 包裹
-  const setupRenderEffect = (instance, vnode, container) => {
+  const setupRenderEffect = (instance, vnode, container, anchor) => {
     const componentUpdateFn = () => {
       if (!instance.isMounted) {
         const proxyToUse = instance.proxy
@@ -316,7 +317,7 @@ export function createRenderer(renderOptions) {
         // TODO beforeMount hook
         console.log(`beforeMount: ${instance.type.name}`)
 
-        patch(null, subTree, container, null, instance)
+        patch(null, subTree, container, anchor, instance)
 
         vnode.el = subTree.el
 
@@ -324,6 +325,16 @@ export function createRenderer(renderOptions) {
         console.log(`mounted: ${instance.type.name}`)
         instance.isMounted = true
       } else {
+        // 有 next 的话，说明需要更新组件的 props slots 等
+        const { next, vnode } = instance
+        if (next) {
+          next.el = vnode.el
+          const preProps = instance.vnode.props || {}
+          instance.vnode = next
+          instance.next = null
+          updateProps(instance, next.props, preProps)
+        }
+
         const proxyToUse = instance.proxy
         const nextTree = normalizeVNode(instance.render.call(proxyToUse))
 
@@ -333,7 +344,7 @@ export function createRenderer(renderOptions) {
         // TODO beforeUpdated hook
         console.log(`beforeUpdated: ${instance.type.name}`)
 
-        patch(prevTree, nextTree, container, null, instance)
+        patch(prevTree, nextTree, container, anchor, instance)
 
         // TODO updated hook
         console.log(`updated: ${instance.type.name}`)
@@ -346,27 +357,36 @@ export function createRenderer(renderOptions) {
     update()
   }
 
-  const mountComponent = (vnode, container, parentComponent) => {
+  const mountComponent = (vnode, container, anchor, parentComponent) => {
     // 创建实例，并且保存到 vnode.component 中
     const instance = (vnode.component = createComponentInstance(vnode, parentComponent))
 
     setupComponent(instance)
 
-    setupRenderEffect(instance, vnode, container)
+    setupRenderEffect(instance, vnode, container, anchor)
   }
 
-  const updateComponent = (n1, n2, container) => {
+  const updateComponent = (n1, n2) => {
+    const instance = (n2.component = n1.component)
 
+    if (shouldUpdateComponent(n1, n2)) {
+      instance.next = n2
+      instance.update()
+    } else {
+      n2.component = n1.component
+      n2.el = n1.el
+      instance.vnode = n2
+    }
   }
 
   // 组件的处理方法
-  const processComponent = (n1, n2, container, parentComponent) => {
+  const processComponent = (n1, n2, container, anchor, parentComponent) => {
     if (!n1) {
       // 初次渲染
-      mountComponent(n2, container, parentComponent)
+      mountComponent(n2, container, anchor, parentComponent)
     } else {
       // 更新流程
-      updateComponent(n1, n2, container)
+      updateComponent(n1, n2)
     }
   }
 
@@ -388,7 +408,7 @@ export function createRenderer(renderOptions) {
         if (shapeFlag & ShapeFlags.ELEMENT) {
           processElement(n1, n2, container, anchor, parentComponent)
         } else if (shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
-          processComponent(n1, n2, container, parentComponent)
+          processComponent(n1, n2, container, anchor, parentComponent)
         }
         break
     }
