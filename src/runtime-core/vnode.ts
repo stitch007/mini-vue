@@ -1,6 +1,7 @@
 import { isArray, isString, ShapeFlags } from '../shared'
 
 export const Text = Symbol('Text')
+export const Fragment = Symbol('Fragment')
 
 export function isVNode(value: any): boolean {
   return !!(value && value.__v_isVNode)
@@ -30,7 +31,8 @@ export function createVNode(type: any, props?: any, children?: string | any[]) {
 }
 
 export { createVNode as createElementVNode }
-export function createTextVNode(text: string = " ") {
+
+export function createTextVNode(text: string = ' ') {
   return createVNode(Text, {}, text)
 }
 

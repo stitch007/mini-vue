@@ -1,5 +1,5 @@
 import { ShapeFlags } from '../shared'
-import { isSameVNodeType, normalizeVNode, Text } from './vnode'
+import { Fragment, isSameVNodeType, normalizeVNode, Text } from './vnode'
 import { createComponentInstance, setupComponent } from './component'
 import { queueJob } from './scheduler'
 import { ReactiveEffect } from '../reactivity/effect'
@@ -390,6 +390,13 @@ export function createRenderer(renderOptions) {
     }
   }
 
+  const processFragment = (n1, n2, container) => {
+    // 渲染 children 作为 container 的子元素
+    if (!n1) {
+      mountChildren(n2.children, container, null, null)
+    }
+  }
+
   const patch = (n1, n2, container, anchor = null, parentComponent = null) => {
     // n1 和 n2 不相等 那么直接卸载n1
     if (n1 && !isSameVNodeType(n1, n2)) {
@@ -403,6 +410,9 @@ export function createRenderer(renderOptions) {
     switch (type) {
       case Text:
         processText(n1, n2, container, anchor)
+        break
+      case Fragment:
+        processFragment(n1, n2, container)
         break
       default:
         if (shapeFlag & ShapeFlags.ELEMENT) {
