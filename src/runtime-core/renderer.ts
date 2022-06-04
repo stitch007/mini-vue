@@ -5,6 +5,7 @@ import { queueJob } from './scheduler'
 import { ReactiveEffect } from '../reactivity/effect'
 import { shouldUpdateComponent } from './componentRenderUtils'
 import { updateProps } from './componentProps'
+import { createAppAPI } from './apiCreateApp'
 
 export function createRenderer(renderOptions) {
   const {
@@ -444,7 +445,7 @@ export function createRenderer(renderOptions) {
 
   return {
     render,
-    patch,
+    createApp: createAppAPI(render),
   }
 }
 
