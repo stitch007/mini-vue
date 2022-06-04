@@ -22,8 +22,21 @@
   - [x] proxyRefs
 
 - runtime-core
+  - [x] provide 和 inject
+  - [x] onBeforeMount
+  - [x] onMounted
+  - [x] onBeforeUpdate
+  - [x] onUpdated
+  - [x] onBeforeUnmount
+  - [x] onUnmounted
+  - [x] emit
+  - [x] 插槽
+  - [x] h
+  - [x] patch
+  - [x] 调度器
 
 - runtime-dom
+  - [x] createApp
 
 - compiler-core
 
