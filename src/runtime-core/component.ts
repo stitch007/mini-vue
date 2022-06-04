@@ -31,6 +31,7 @@ export function createComponentInstance(vnode, parent) {
     setupState: {}, // setup 返回值
     propsOptions: vnode.type.props || {}, // { props: { hello: { type: String, default: 'world' }}}
     proxy: null, // instance.render.call(instance.proxy)
+    provides: parent ? parent.provides : {}, //  继承 parent.provides 的属性
     render: null, // 组件的渲染函数
     emit: null, // 发射事件
     exposed: {}, // 暴露的东西
@@ -95,7 +96,9 @@ function handleSetupResult(instance, setupResult) {
 }
 
 function finishComponentSetup(instance) {
-  instance.render = instance.type.render
+  if (!instance.render) {
+    instance.render = instance.type.render
+  }
 
   // TODO 编译 template
 }
