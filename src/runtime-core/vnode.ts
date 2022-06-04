@@ -1,4 +1,4 @@
-import { isArray, isString, ShapeFlags } from '../shared'
+import { isArray, isObject, isString, ShapeFlags } from '../shared'
 
 export const Text = Symbol('Text')
 export const Fragment = Symbol('Fragment')
@@ -11,23 +11,31 @@ export function isSameVNodeType(n1, n2): boolean {
   return n1.type === n2.type && n1.key === n2.key
 }
 
-export function createVNode(type: any, props?: any, children?: string | any[]) {
-  const shapeFlag = (isString(type)
-      ? ShapeFlags.ELEMENT
-      : ShapeFlags.STATEFUL_COMPONENT)
-    | (isArray(children)
-      ? ShapeFlags.ARRAY_CHILDREN
-      : ShapeFlags.TEXT_CHILDREN)
-
-  return {
+export function createVNode(type, props?, children?) {
+  const vnode = {
     __v_isVNode: true,
     type,
     key: props?.key,
-    el: null,
-    props: props || null,
+    el: null, // vnode 对应的真是 dom
+    component: null, // 组件的 instance
+    props: props || {},
     children,
-    shapeFlag,
+    shapeFlag: isString(type) ? ShapeFlags.ELEMENT : ShapeFlags.STATEFUL_COMPONENT,
   }
+
+  if (isArray(children)) {
+    vnode.shapeFlag |= ShapeFlags.ARRAY_CHILDREN
+  } else if (isObject(children)) {
+    if (vnode.shapeFlag & ShapeFlags.ELEMENT) {
+
+    } else {
+      vnode.shapeFlag |= ShapeFlags.SLOTS_CHILDREN
+    }
+  } else {
+    vnode.shapeFlag |= ShapeFlags.TEXT_CHILDREN
+  }
+
+  return vnode
 }
 
 export { createVNode as createElementVNode }
