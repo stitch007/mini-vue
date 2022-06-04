@@ -20,7 +20,13 @@ export function createVNode(type, props?, children?) {
     component: null, // 组件的 instance
     props: props || {},
     children,
-    shapeFlag: isString(type) ? ShapeFlags.ELEMENT : ShapeFlags.STATEFUL_COMPONENT,
+    shapeFlag: 0,
+  }
+
+  if (isObject(type)) {
+    vnode.shapeFlag |= ShapeFlags.STATEFUL_COMPONENT
+  } else if (isString(type)) {
+    vnode.shapeFlag |= ShapeFlags.ELEMENT
   }
 
   if (isArray(children)) {

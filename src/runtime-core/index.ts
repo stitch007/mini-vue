@@ -1,3 +1,12 @@
+export { provide, inject } from './apiInject'
+export {
+  onBeforeMount,
+  onMounted,
+  onUpdated,
+  onBeforeUpdate,
+  onBeforeUnmount,
+  onUnmounted,
+} from './apiLifecycle'
 export { h } from './h'
-export { createElementVNode, createTextVNode } from './vnode'
+export { Text, Fragment, createElementVNode, createTextVNode } from './vnode'
 export { renderSlots } from './helpers/renderSlots'

@@ -1,4 +1,4 @@
-import { ShapeFlags } from '../shared'
+import { invokeArrayFns, ShapeFlags } from '../shared'
 import { Fragment, isSameVNodeType, normalizeVNode, Text } from './vnode'
 import { createComponentInstance, setupComponent } from './component'
 import { queueJob } from './scheduler'
@@ -22,6 +22,20 @@ export function createRenderer(renderOptions) {
   } = renderOptions
 
   const unmount = (vnode, parentComponent) => {
+    if (vnode.type === Fragment) {
+      vnode.children.forEach(child => unmount(child, parentComponent))
+    }
+
+    if (vnode.shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
+      const { um, bum, subTree } = vnode.component
+
+      bum && invokeArrayFns(bum)
+
+      unmount(subTree, parentComponent)
+
+      um && invokeArrayFns(um)
+    }
+
     hostRemove(vnode.el)
   }
 
@@ -192,7 +206,7 @@ export function createRenderer(renderOptions) {
 
         // 老的节点大于新节点的数量的话，后面的老节点全删了
         if (patched >= toBePatched) {
-          hostRemove(prevChild.el)
+          unmount(prevChild, parentComponent)
           continue
         }
 
@@ -212,7 +226,7 @@ export function createRenderer(renderOptions) {
         // newIndex 有可能是 0
         if (newIndex === undefined) {
           // 新节点中找不到当前节点 删掉
-          hostRemove(prevChild.el)
+          unmount(prevChild, parentComponent)
         } else {
           newIndexToOldIndexMap[newIndex - s2] = i + 1
           // newIndex 一直是升序的那么就不用移动了
@@ -314,16 +328,14 @@ export function createRenderer(renderOptions) {
         const proxyToUse = instance.proxy
         const subTree = (instance.subTree = normalizeVNode(instance.render.call(proxyToUse)))
 
-        // TODO beforeMount hook
-        console.log(`beforeMount: ${instance.type.name}`)
+        instance.bm && invokeArrayFns(instance.bm)
 
         patch(null, subTree, container, anchor, instance)
 
         vnode.el = subTree.el
-
-        // TODO mounted hook
-        console.log(`mounted: ${instance.type.name}`)
         instance.isMounted = true
+
+        instance.m && invokeArrayFns(instance.m)
       } else {
         // 有 next 的话，说明需要更新组件的 props slots 等
         const { next, vnode } = instance
@@ -341,13 +353,11 @@ export function createRenderer(renderOptions) {
         const prevTree = instance.subTree
         instance.subTree = nextTree
 
-        // TODO beforeUpdated hook
-        console.log(`beforeUpdated: ${instance.type.name}`)
+        instance.bu && invokeArrayFns(instance.bu)
 
         patch(prevTree, nextTree, container, anchor, instance)
 
-        // TODO updated hook
-        console.log(`updated: ${instance.type.name}`)
+        instance.u && invokeArrayFns(instance.u)
       }
     }
 
@@ -398,6 +408,10 @@ export function createRenderer(renderOptions) {
   }
 
   const patch = (n1, n2, container, anchor = null, parentComponent = null) => {
+    if (n1 === n2) {
+      return
+    }
+
     // n1 和 n2 不相等 那么直接卸载n1
     if (n1 && !isSameVNodeType(n1, n2)) {
       unmount(n1, parentComponent)

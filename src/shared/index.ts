@@ -54,3 +54,9 @@ export const capitalize = cacheStringFunction(
 export const toHandlerKey = cacheStringFunction((str: string) =>
   str ? `on${capitalize(str)}` : ``
 )
+
+export const invokeArrayFns = (fns: Function[], arg?: any) => {
+  for (let i = 0; i < fns.length; i++) {
+    fns[i](arg)
+  }
+}

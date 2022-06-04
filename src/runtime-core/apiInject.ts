@@ -1,4 +1,5 @@
 import { getCurrentInstance } from './component'
+import { isFunction } from '../shared'
 
 export function provide(key, value) {
   const currentInstance = getCurrentInstance()
@@ -24,7 +25,7 @@ export function inject(key, defaultValue) {
     if (key in provides) {
       return provides[key]
     } else if (defaultValue) {
-      if (typeof defaultValue === 'function') {
+      if (isFunction(defaultValue)) {
         return defaultValue()
       }
       return defaultValue
