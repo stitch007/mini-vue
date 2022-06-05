@@ -31,11 +31,17 @@
   - [x] onUnmounted
   - [x] emit
   - [x] 插槽
+  - [x] renderSlots
   - [x] h
   - [x] patch
+  - [x] createRenderer
+  - [x] createAppAPI
   - [x] 调度器
+  - [x] createVNode
 
 - runtime-dom
+  - [x] 基本 dom 操作
+  - [x] ensureRenderer
   - [x] createApp
 
 - compiler-core
