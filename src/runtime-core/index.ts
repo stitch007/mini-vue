@@ -7,6 +7,7 @@ export {
   onBeforeUnmount,
   onUnmounted,
 } from './apiLifecycle'
+export { watch } from './apiWatch'
 export { h } from './h'
 export { Text, Fragment, createElementVNode, createTextVNode } from './vnode'
 export { renderSlots } from './helpers/renderSlots'

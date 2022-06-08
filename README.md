@@ -29,6 +29,7 @@
   - [x] onUpdated
   - [x] onBeforeUnmount
   - [x] onUnmounted
+  - [x] watch
   - [x] emit
   - [x] 插槽
   - [x] renderSlots
@@ -37,6 +38,7 @@
   - [x] createRenderer
   - [x] createAppAPI
   - [x] 调度器
+  - [x] nextTick
   - [x] createVNode
 
 - runtime-dom
